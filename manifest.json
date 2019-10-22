@@ -1,0 +1,24 @@
+{
+  "required_api_version": "^2.0.0",
+  "name": "Notes NV",
+  "description": "NotationalVelocity-inspired notes taking",
+  "developer_name": "Peter Bakhirev",
+  "icon": "images/notnv.png",
+  "options": {
+    "query_debounce": 0.1
+  },
+  "preferences": [
+    {
+      "id": "search",
+      "type": "keyword",
+      "name": "Search notes",
+      "default_value": "nv"
+    },
+    {
+      "id": "notes-directory-path",
+      "type": "input",
+      "name": "Directory with notes text files",
+      "default_value": "~/SynologyDrive/notes"
+    }
+  ]
+}
