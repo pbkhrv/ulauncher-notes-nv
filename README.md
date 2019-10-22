@@ -1,70 +1,67 @@
-# ulauncher-zeal
+# ulauncher-notes-nv
 
-A [Ulauncher](https://ulauncher.io/) extension to query the [Zeal](https://zealdocs.org/) offline documentation browser.
+A [NotationalVelocity](http://notational.net/)-inspired [Ulauncher](https://ulauncher.io/) extension for storing and retrieving notes as individual text files.
 
 ## Features
 
-- Show installed Zeal docsets with their icons
-- Fuzzy filtering of docsets
-- Open the Zeal app with the specified docset and search query
+- Keyboard-centric search-first user experience: every action, including new note creation, begins with a search
+- Intuitive fuzzy search of note titles and contents in Ulauncher
+- Notes are stored as individual text/markdown/whatever files in a directory
+- Use your whatever editor you like to view and edit notes
 
-*Note: the extension cannot show actual search results because as of this writing, Zeal doesn't have an actual search API. The only way to interact with Zeal is to pass the docset name and the query on the command line.*
 
 ## Why?
 
-Why use this instead of the Zeal's global shortcut?
-- If you already use Ulauncher for other things, there's no need to define and learn a separate keyboard shortcut for Zeal
-- The fuzzy docset keyword matching in Ulauncher *could* sometimes maybe require less keystrokes than "call up Zeal, start typing docset name, press Tab, start typing query"
+NotationalVelocity is a Mac OS application with a cult following. In its own words:
 
-I know, it's not much. I guess I just like Ulauncher :-)
+> NOTATIONAL VELOCITY is an application that stores and retrieves notes.
 
-## Requirements
+> It is an attempt to loosen the mental blockages to recording information and to scrape away the tartar of convention that handicaps its retrieval. The solution is by nature nonconformist.
 
-- Install [Zeal](https://zealdocs.org/)
+The "nonconformist" part is NV ditching the traditional file-oriented actions of "create", "open" etc to reduce the number of steps required to store or access a piece of content:
+
+> Searching for notes is not a separate action; rather, it is the primary interface.
+
+> Searching encompasses all notes' content and occurs instantly with each key pressed.
+
+> Notational Velocity's window was designed for keyboard input above all else, and thus has no buttons.
+
+Ulauncher happens to share the search-centric design goals. The only thing it doesn't provide is a text editor, and the hope is that using an external editor won't detract from the overall user experience too much.
+
 
 ## Installation
 
 Open Ulauncher preferences window -> Extensions -> "Add extension" and paste the following url:
 
 ```
-https://github.com/pbkhrv/ulauncher-zeal
+https://github.com/pbkhrv/ulauncher-notes-nv
 ```
 
 ## Configuration
 
-- `Zeal docsets path`: path to where your installation of Zeal stores the downloaded docsets. The default works on Ubuntu with Zeal installed thru apt, but your mileage may vary. Check *Zeal -> Preferences -> General -> Docset storage*.
+- `Notes directory path`: path to where your notes files are stored.
+- `Command to open note`: command to be executed to open the selected note file. Use the `%p` token to insert the full path to the note file. (If left empty, default application associated with that file type will be executed via `xdg-open`, e.g. default for `.txt` in Ubuntu is `Gedit`)
 
 ## Usage
 
-Open Ulauncher and type in "zl " to start the extension. If everything is configured correctly, you'll see the list of your downloaded Zeal docsets:
+Open Ulauncher and type in "nv " to start the extension. If everything is configured correctly, you'll see a partial list of your notes files, most recently accessed or modified first:
 
-![All docsets](images/screenshots/all-docsets.png)
+![All notes, no query](images/screenshots/empty-query.png)
 
-The first argument is the docset keyword. It filters the list of docsets down to whatever matches the keyword:
+Start typing the search query and the list if filtered down accordingly:
 
-![Keyword](images/screenshots/keyword-py.png)
+![Query 1](images/screenshots/search-query-1.png)
 
-The second argument is the search query that'll be passed to Zeal:
+The more concrete the search, the smaller the resulting list:
 
-![Query](images/screenshots/query.png)
-
-Press Enter to open Zeal with that keyword and query:
-
-![Zeal window](images/screenshots/zeal-window.png)
+![Query 2](images/screenshots/search-query-2.png)
 
 ## Troubleshooting
 
-### Why doesn't the Zeal application window come to the foreground after the query is sent to it?
+### Why doesn't my editor application window come to the foreground after I open the note?
 
-Please install [wmctrl](http://tripie.sweb.cz/utils/wmctrl/) - it's a utility that ulauncher-zeal calls to "activate" the Zeal window and bring it to the foreground after sending the docset query to it:
-
-**Ubuntu and Debian**
-```shell
-sudo apt-get install wmctrl
-```
+...wmctrl something?...
 
 ## Inspiration and thanks
 
-I loved Alfred on MacOS, and now I love Ulauncher on Linux. The Python API is a joy to work with.
-
-Thanks to [Dash for MacOS](https://kapeli.com/dash) and the [Zeal project](https://github.com/zealdocs/zeal/) for making awesome offline documentation easily available.
+I loved NotationalVelocity and its modern fork [NVAlt](https://brettterpstra.com/projects/nvalt/) on MacOS, and I've been searching for a replacement ever since switching to Linux.
