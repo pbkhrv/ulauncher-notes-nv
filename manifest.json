@@ -3,7 +3,7 @@
   "name": "Notes NV",
   "description": "NotationalVelocity-inspired notes taking",
   "developer_name": "Peter Bakhirev",
-  "icon": "images/notnv.png",
+  "icon": "images/notes-nv.svg",
   "options": {
     "query_debounce": 0.1
   },
