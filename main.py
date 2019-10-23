@@ -16,7 +16,7 @@ from ulauncher.api.shared.action.SetUserQueryAction import SetUserQueryAction
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
 
-from search import search_note_file_contents
+from search import search_notes
 
 
 MAX_RESULTS_VISIBLE = 10
@@ -34,13 +34,13 @@ class NotesNvExtension(Extension):
     def get_notes_path(self):
         return self.preferences["notes-directory-path"]
 
-    def get_note_file_globs(self):
-        return ["*.txt", "*.md"]
+    def get_note_file_extensions(self):
+        return ["txt", "md"]
 
     def process_search_kw_arg_query(self, kw, arg):
         notes_path = os.path.expanduser(self.get_notes_path())
-        matches = search_note_file_contents(
-            notes_path, self.get_note_file_globs(), arg
+        matches = search_notes(
+            notes_path, self.get_note_file_extensions(), arg
         )
         matches = matches[:MAX_RESULTS_VISIBLE]
 
