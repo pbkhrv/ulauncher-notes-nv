@@ -47,7 +47,7 @@ class NotesNvExtension(Extension):
         items = []
         for m in matches:
             item = ExtensionResultItem(
-                icon="images/empty.png",
+                icon="images/note.svg",
                 name=m.filename,
                 description=m.match_summary,
                 on_enter=OpenAction(os.path.join(notes_path, m.filename)),
@@ -59,7 +59,7 @@ class NotesNvExtension(Extension):
         return RenderResultListAction(
             [
                 ExtensionResultItem(
-                    icon="images/empty.png", name="Nothing", on_enter=DoNothingAction()
+                    icon="images/notes-nv.svg", name="Please enter search query...", on_enter=DoNothingAction()
                 )
             ]
         )
