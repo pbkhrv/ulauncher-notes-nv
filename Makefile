@@ -1,4 +1,7 @@
+init:
+	pip3 install -r dev/requirements.txt
+
 test:
-	pylint3 search.py
-	python3 -m unittest tests/test_*.py
+	pylint notesnv/search.py
+	eval "PYTHONPATH=`pwd` py.test"
 

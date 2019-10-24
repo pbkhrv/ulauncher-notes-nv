@@ -1,6 +1,7 @@
 import os
 import unittest
-from .context import search, with_temp_dir
+from utils import with_temp_dir
+from notesnv import search
 
 
 class FindTest(unittest.TestCase):

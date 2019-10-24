@@ -30,8 +30,6 @@ class SubprocessError(Exception):
     Subprocess run didn't return expected exit code
     """
 
-    pass
-
 
 def grep_dir(path, file_exts, pattern):
     """
@@ -55,15 +53,16 @@ def grep_dir(path, file_exts, pattern):
         + ["-e", pattern, path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        check=False,
     )
 
     if ret.returncode == 2:
         raise SubprocessError(ret.stderr.decode("utf-8"))
-    else:
-        out = ret.stdout.decode("utf-8")
-        # Can't use .splitlines below because some of my files contain lines with weird linebreaks
-        lines = out.split("\n")
-        return [tuple(l.split("\x00", maxsplit=1)) for l in lines if l]
+
+    out = ret.stdout.decode("utf-8")
+    # Can't use .splitlines below because some of my files contain lines with weird linebreaks
+    lines = out.split("\n")
+    return [tuple(l.split("\x00", maxsplit=1)) for l in lines if l]
 
 
 def file_exts_to_regex(exts):
@@ -111,15 +110,16 @@ def find_dir(path, file_exts, name_chunks):
         + name_chunks_to_find_args(name_chunks),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        check=False,
     )
 
     if ret.returncode != 0:
         raise SubprocessError(ret.stderr.decode("utf-8"))
-    else:
-        return [
-            os.path.relpath(fpath, path)
-            for fpath in ret.stdout.decode("utf-8").splitlines()
-        ]
+
+    return [
+        os.path.relpath(fpath, path)
+        for fpath in ret.stdout.decode("utf-8").splitlines()
+    ]
 
 
 def summarized_content_match(text, ctx_word, ctx_len):
