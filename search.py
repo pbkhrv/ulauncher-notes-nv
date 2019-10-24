@@ -74,11 +74,29 @@ def file_exts_to_regex(exts):
     return ".+({})$".format("|".join(globs))
 
 
-def find_dir(path, file_exts, query_args):
+def name_chunks_to_find_args(chunks):
     """
-    Execute `find` on a directory and find all files of particular extension matching a file pattern
+    Turn array of name chunks into a set of '-iname' arg segments joined by '-a' predicate.
+
+    For example:
+    ["good"] becomes `-iname "*good*"`
+    ["py","note"] becomes `( -iname "*py*" -a -iname "*note*" )`
     """
-    name_glob = "*" + "*".join(query_args) + "*"
+    if len(chunks) == 1:
+        return ["-iname", f"*{chunks[0]}*"]
+    args = ["(", "-iname", f"*{chunks[0]}*"]
+    for chunk in chunks[1:]:
+        args += ["-a", "-iname", f"*{chunk}*"]
+    args += [")"]
+    return args
+
+
+def find_dir(path, file_exts, name_chunks):
+    """
+    Execute `find` on a directory and find all files that:
+    - have one of the extensions in `file_exts`
+    - have names that contain all `name_chunks` in any order
+    """
     ret = subprocess.run(
         [
             "find",
@@ -89,9 +107,8 @@ def find_dir(path, file_exts, query_args):
             "egrep",
             "-iregex",
             file_exts_to_regex(file_exts),
-            "-iname",
-            name_glob,
-        ],
+        ]
+        + name_chunks_to_find_args(name_chunks),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -99,7 +116,10 @@ def find_dir(path, file_exts, query_args):
     if ret.returncode != 0:
         raise SubprocessError(ret.stderr.decode("utf-8"))
     else:
-        return ret.stdout.decode("utf-8").splitlines()
+        return [
+            os.path.relpath(fpath, path)
+            for fpath in ret.stdout.decode("utf-8").splitlines()
+        ]
 
 
 def summarized_content_match(text, ctx_word, ctx_len):
@@ -149,9 +169,7 @@ def search_note_file_titles(path, file_exts, query):
     full_path = os.path.expanduser(path)
     find_matches = find_dir(full_path, file_exts, args)
     matches = []
-    file_name_start = len(full_path) + 1
     for fn in find_matches:
-        fn = fn[file_name_start:]
         matches.append(SearchResultItem(fn, fn.lower(), "", "", ""))
     return matches
 
