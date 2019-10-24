@@ -11,11 +11,11 @@ def create_text_file(path, filename, text):
 
 def with_temp_dir(filenames):
     def decorator(func):
-        def wrapper(self):
+        def wrapper():
             with TemporaryDirectory() as path:
                 for fn in filenames:
                     create_text_file(path, fn, "")
-                func(self, path)
+                func(path)
 
         return wrapper
 
