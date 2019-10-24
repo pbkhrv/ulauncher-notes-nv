@@ -3,5 +3,5 @@ init:
 
 test:
 	pylint notesnv/search.py
-	eval "PYTHONPATH=`pwd` py.test"
+	eval "PYTHONPATH=`pwd` py.test --flake8 tests/"
 
