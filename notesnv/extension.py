@@ -2,10 +2,7 @@ import os
 import re
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.client.EventListener import EventListener
-from ulauncher.api.shared.event import (
-    KeywordQueryEvent,
-    ItemEnterEvent,
-)
+from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallResultItem
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
@@ -70,7 +67,8 @@ class NotesNvExtension(Extension):
                     {
                         "action": "create_note",
                         "path": os.path.join(self.get_notes_path(), new_note_filename),
-                    }
+                    },
+                    keep_app_open=True,
                 ),
             )
 
@@ -113,7 +111,6 @@ class NotesNvExtension(Extension):
         try:
             fd = open(path, "x")
             fd.close()
-            print(path)
             return OpenAction(path)
         except Exception:
             return RenderResultListAction(
