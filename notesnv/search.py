@@ -62,7 +62,12 @@ def grep_dir(path, file_exts, pattern):
     out = ret.stdout.decode("utf-8")
     # Can't use .splitlines below because some of my files contain lines with weird linebreaks
     lines = out.split("\n")
-    return [tuple(l.split("\x00", maxsplit=1)) for l in lines if l]
+    matches = []
+    for line in lines:
+        if line:
+            fn, text = line.split("\x00", maxsplit=1)
+            matches.append((os.path.relpath(fn, path), text))
+    return matches
 
 
 def file_exts_to_regex(exts):
@@ -146,16 +151,14 @@ def search_note_file_contents(path, file_exts, query):
     full_path = os.path.expanduser(path)
     grep_matches = grep_dir(full_path, file_exts, pattern)
     matches = []
-    file_name_start = len(full_path) + 1
-    for fn, mtext in grep_matches:
-        fn = fn[file_name_start:]
+    for fn, text in grep_matches:
         matches.append(
             SearchResultItem(
                 fn,
                 fn.lower(),
-                mtext,
-                mtext.lower(),
-                summarized_content_match(mtext, args[0], 25),
+                text,
+                text.lower(),
+                summarized_content_match(text, args[0], 25),
             )
         )
     return matches

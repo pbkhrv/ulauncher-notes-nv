@@ -9,12 +9,17 @@ def create_text_file(path, filename, text):
     return full_path
 
 
-def with_temp_dir(filenames):
+def with_temp_dir(items):
     def decorator(func):
         def wrapper():
             with TemporaryDirectory() as path:
-                for fn in filenames:
-                    create_text_file(path, fn, "")
+                for item in items:
+                    if isinstance(item, str):
+                        create_text_file(path, item, "")
+                    elif isinstance(item, tuple):
+                        create_text_file(path, item[0], item[1])
+                    else:
+                        raise Exception("with_temp_dir arg should be str or tuple")
                 func(path)
 
         return wrapper
