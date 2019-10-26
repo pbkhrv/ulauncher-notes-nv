@@ -17,8 +17,16 @@
     {
       "id": "notes-directory-path",
       "type": "input",
-      "name": "Directory with notes text files",
-      "default_value": "~/SynologyDrive/notes"
+      "name": "Path to directory with notes",
+      "description": "Each note is stored in a separate text file",
+      "default_value": "~/notes/"
+    },
+    {
+      "id": "file-extensions",
+      "type": "input",
+      "name": "Note file extensions",
+      "description": "Search will be limited to files with these extensions. Comma-separated list.",
+      "default_value": "txt,md"
     }
   ]
 }

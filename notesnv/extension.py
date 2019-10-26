@@ -17,6 +17,9 @@ MAX_RESULTS_VISIBLE = 10
 
 
 def error_item(message):
+    """
+    Show small result item with error icon and a message.
+    """
     return ExtensionSmallResultItem(
         icon="images/error.svg", name=message, on_action=DoNothingAction()
     )
@@ -48,10 +51,20 @@ class NotesNvExtension(Extension):
         self.subscribe(ItemEnterEvent, ItemEnterEventListener())
 
     def get_notes_path(self):
+        """
+        Notes directory path preference.
+        """
         return os.path.expanduser(self.preferences["notes-directory-path"])
 
     def get_note_file_extensions(self):
-        return ["txt", "md"]
+        """
+        Get list of notes file extensions from preferences.
+        Stored as comma-separated list.
+        """
+        exts = self.preferences["file-extensions"]
+        if not exts:
+            exts = "txt,md"
+        return exts.replace(" ", "").split(",")
 
     def create_note_action_item(self, query_arg, query_matches):
         new_note_title = safe_filename(query_arg)
