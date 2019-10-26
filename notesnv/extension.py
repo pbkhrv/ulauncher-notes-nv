@@ -1,3 +1,6 @@
+"""
+Notes search Ulauncher extension inspired by NotationalVelocity
+"""
 import os
 import re
 from ulauncher.api.client.Extension import Extension
@@ -40,6 +43,7 @@ def contains_filename_match(matches, filename, extensions):
     for match in matches:
         if match.filename_lower in possible_fns:
             return True
+    return False
 
 
 class NotesNvExtension(Extension):
@@ -67,36 +71,49 @@ class NotesNvExtension(Extension):
         return exts.replace(" ", "").split(",")
 
     def create_note_action_item(self, query_arg, query_matches):
+        """
+        Construct "Create note" result item if new filename.
+
+        Check list of matches to make sure the new filename doesnt exist already
+        """
+        # Split this up into "is_new_note_filename" and "create_note_action_item"
         new_note_title = safe_filename(query_arg)
         exts = self.get_note_file_extensions()
-        if not contains_filename_match(query_matches, new_note_title, exts):
-            ext = exts[0]
-            new_note_filename = f"{new_note_title}.{ext}"
-            return ExtensionResultItem(
-                icon="images/create-note.svg",
-                name="Create note",
-                description=new_note_filename,
-                on_enter=ExtensionCustomAction(
-                    {
-                        "action": "create_note",
-                        "path": os.path.join(self.get_notes_path(), new_note_filename),
-                    },
-                    keep_app_open=True,
-                ),
-            )
+        if contains_filename_match(query_matches, new_note_title, exts):
+            return None
 
-    def process_search_kw_arg_query(self, kw, arg):
+        ext = exts[0]
+        new_note_filename = f"{new_note_title}.{ext}"
+        return ExtensionResultItem(
+            icon="images/create-note.svg",
+            name="Create note",
+            description=new_note_filename,
+            on_enter=ExtensionCustomAction(
+                {
+                    "action": "create_note",
+                    "path": os.path.join(self.get_notes_path(), new_note_filename),
+                },
+                keep_app_open=True,
+            ),
+        )
+
+    def process_search_query(self, arg):
+        """
+        Show results that match user's query.
+        """
         matches = search_notes(
             self.get_notes_path(), self.get_note_file_extensions(), arg
         )
 
         items = []
-        for m in matches[:MAX_RESULTS_VISIBLE]:
+        for match in matches[:MAX_RESULTS_VISIBLE]:
             item = ExtensionResultItem(
                 icon="images/note.svg",
-                name=m.filename,
-                description=m.match_summary,
-                on_enter=OpenAction(os.path.join(self.get_notes_path(), m.filename)),
+                name=match.filename,
+                description=match.match_summary,
+                on_enter=OpenAction(
+                    os.path.join(self.get_notes_path(), match.filename)
+                ),
             )
             items.append(item)
 
@@ -106,7 +123,10 @@ class NotesNvExtension(Extension):
 
         return RenderResultListAction(items)
 
-    def process_empty_query(self, kw):
+    def process_empty_query(self):  # pylint: disable=no-self-use
+        """
+        Show something if query is empty
+        """
         return RenderResultListAction(
             [
                 ExtensionResultItem(
@@ -117,31 +137,28 @@ class NotesNvExtension(Extension):
             ]
         )
 
-    def do_create_note(self, path):
+    def do_create_note(self, path):  # pylint: disable=no-self-use
         """
         Create empty note file with given path and open it
         """
-        try:
-            fd = open(path, "x")
-            fd.close()
-            return OpenAction(path)
-        except Exception:
-            return RenderResultListAction(
-                [error_item(f"Cannot create note file {path}")]
-            )
+        with open(path, "x"):
+            pass
+        return OpenAction(path)
 
 
+# pylint: disable=too-few-public-methods
 class KeywordQueryEventListener(EventListener):
     """ KeywordQueryEventListener class manages user input """
 
     def on_event(self, event, extension):
+        """
+        Handle keyword query event.
+        """
         # assuming only one ulauncher keyword
-        kw = event.get_keyword()
         arg = event.get_argument()
-        if arg:
-            return extension.process_search_kw_arg_query(kw, arg)
-        else:
-            return extension.process_empty_query(kw)
+        if not arg:
+            return extension.process_empty_query()
+        return extension.process_search_query(arg)
 
 
 class ItemEnterEventListener(EventListener):
@@ -156,3 +173,4 @@ class ItemEnterEventListener(EventListener):
         data = event.get_data()
         if data["action"] == "create_note":
             return extension.do_create_note(data["path"])
+        return None
