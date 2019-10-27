@@ -60,7 +60,8 @@ def grep_dir(path, file_exts, pattern):
         raise SubprocessError(ret.stderr.decode("utf-8"))
 
     out = ret.stdout.decode("utf-8")
-    # Can't use .splitlines below because some of my files contain lines with weird linebreaks
+    # Can't use .splitlines below because
+    # some of my files contain lines with weird linebreaks
     lines = out.split("\n")
     matches = []
     for line in lines:
@@ -80,7 +81,7 @@ def file_exts_to_regex(exts):
 
 def name_chunks_to_find_args(chunks):
     """
-    Turn array of name chunks into a set of '-iname' arg segments joined by '-a' predicate.
+    Turn array of name chunks into a set of '-iname' args joined by '-a' predicate.
 
     For example:
     ["good"] becomes `-iname "*good*"`
@@ -129,7 +130,8 @@ def find_dir(path, file_exts, name_chunks):
 
 def summarized_content_match(text, ctx_word, ctx_len):
     """
-    Summarize a line of text by leaving ctx_len characters around the ctx_word and trimming the rest
+    Summarize a line of text by leaving ctx_len characters around the ctx_word
+    and trimming the rest
     """
     i = text.find(ctx_word)
     if i == -1:
