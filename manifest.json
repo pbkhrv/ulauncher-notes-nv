@@ -27,6 +27,13 @@
       "name": "Note file extensions",
       "description": "Search will be limited to files with these extensions. Comma-separated list.",
       "default_value": "txt,md"
+    },
+    {
+      "id": "open-note-command",
+      "type": "input",
+      "name": "Command to open a note file",
+      "description": "If empty, use default app via xdg-open. Use {fn} as placeholder for the full path to the note file (if not used, path will be passed as the last arg).",
+      "default_value": "gedit {fn}"
     }
   ]
 }

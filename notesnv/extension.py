@@ -3,6 +3,7 @@ Notes search Ulauncher extension inspired by NotationalVelocity
 """
 import os
 import re
+import subprocess
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
@@ -14,6 +15,7 @@ from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
 
 from .search import search_notes
+from .cmd_arg_utils import argbuild
 
 
 MAX_RESULTS_VISIBLE = 10
@@ -111,8 +113,12 @@ class NotesNvExtension(Extension):
                 icon="images/note.svg",
                 name=match.filename,
                 description=match.match_summary,
-                on_enter=OpenAction(
-                    os.path.join(self.get_notes_path(), match.filename)
+                on_enter=ExtensionCustomAction(
+                    {
+                        "action": "open_note",
+                        "path": os.path.join(self.get_notes_path(), match.filename),
+                    },
+                    keep_app_open=True,
                 ),
             )
             items.append(item)
@@ -145,6 +151,18 @@ class NotesNvExtension(Extension):
             pass
         return OpenAction(path)
 
+    def do_open_note(self, path):
+        """
+        Open note file using command specified in preferences
+        or OpenAction() if no command specified
+        """
+        cmd = self.preferences["open-note-command"]
+        if not cmd:
+            return OpenAction(path)
+        args = argbuild(cmd, {"fn": path}, append_missing_field="fn")
+        subprocess.Popen(args)
+        return DoNothingAction()
+
 
 # pylint: disable=too-few-public-methods
 class KeywordQueryEventListener(EventListener):
@@ -169,8 +187,13 @@ class ItemEnterEventListener(EventListener):
         Handle custom "item enter" events:
 
         - Create note
+        - Open note
         """
         data = event.get_data()
+        # pylint: disable=no-else-return
         if data["action"] == "create_note":
             return extension.do_create_note(data["path"])
-        return None
+        elif data["action"] == "open_note":
+            return extension.do_open_note(data["path"])
+        else:
+            return DoNothingAction()
