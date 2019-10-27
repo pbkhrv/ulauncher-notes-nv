@@ -10,10 +10,13 @@ from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallResultItem
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
-from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
 
+from .extension_method_caller import (
+    call_extension_method,
+    CallExtensionMethodEventListener,
+)
 from .search import search_notes
 from .cmd_arg_utils import argbuild
 
@@ -54,7 +57,7 @@ class NotesNvExtension(Extension):
     def __init__(self):
         super(NotesNvExtension, self).__init__()
         self.subscribe(KeywordQueryEvent, KeywordQueryEventListener())
-        self.subscribe(ItemEnterEvent, ItemEnterEventListener())
+        self.subscribe(ItemEnterEvent, CallExtensionMethodEventListener())
 
     def get_notes_path(self):
         """
@@ -90,12 +93,9 @@ class NotesNvExtension(Extension):
             icon="images/create-note.svg",
             name="Create note",
             description=new_note_filename,
-            on_enter=ExtensionCustomAction(
-                {
-                    "action": "create_note",
-                    "path": os.path.join(self.get_notes_path(), new_note_filename),
-                },
-                keep_app_open=True,
+            on_enter=call_extension_method(
+                self.do_create_note,
+                os.path.join(self.get_notes_path(), new_note_filename),
             ),
         )
 
@@ -113,12 +113,9 @@ class NotesNvExtension(Extension):
                 icon="images/note.svg",
                 name=match.filename,
                 description=match.match_summary,
-                on_enter=ExtensionCustomAction(
-                    {
-                        "action": "open_note",
-                        "path": os.path.join(self.get_notes_path(), match.filename),
-                    },
-                    keep_app_open=True,
+                on_enter=call_extension_method(
+                    self.do_open_note,
+                    os.path.join(self.get_notes_path(), match.filename),
                 ),
             )
             items.append(item)
@@ -177,23 +174,3 @@ class KeywordQueryEventListener(EventListener):
         if not arg:
             return extension.process_empty_query()
         return extension.process_search_query(arg)
-
-
-class ItemEnterEventListener(EventListener):
-    """ Handle custom actions """
-
-    def on_event(self, event, extension):
-        """
-        Handle custom "item enter" events:
-
-        - Create note
-        - Open note
-        """
-        data = event.get_data()
-        # pylint: disable=no-else-return
-        if data["action"] == "create_note":
-            return extension.do_create_note(data["path"])
-        elif data["action"] == "open_note":
-            return extension.do_open_note(data["path"])
-        else:
-            return DoNothingAction()
