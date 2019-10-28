@@ -152,9 +152,14 @@ class NotesNv:
         """
         Create empty note file with given path and open it
         """
-        with open(path, "x"):
-            pass
-        return OpenAction(path)
+        try:
+            with open(path, "x"):
+                pass
+        except OSError as exc:
+            return RenderResultListAction(
+                [error_item("Could not create note file", exc.strerror)]
+            )
+        return self.do_open_note(path)
 
     def do_open_note(self, path):
         """
@@ -167,7 +172,7 @@ class NotesNv:
         args = argbuild(cmd, {"fn": path}, append_missing_field="fn")
         try:
             subprocess.Popen(args)
-        except FileNotFoundError as exc:
+        except OSError as exc:
             return RenderResultListAction(
                 [error_item("Could not execute note open command", exc.strerror)]
             )
