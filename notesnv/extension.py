@@ -17,19 +17,27 @@ from .extension_method_caller import (
     call_extension_method,
     CallExtensionMethodEventListener,
 )
-from .search import search_notes, contains_filename_match
+from .search import search_notes, contains_filename_match, SearchError
 from .cmd_arg_utils import argbuild
 
 
 MAX_RESULTS_VISIBLE = 10
 
 
-def error_item(message):
+def error_item(message, details=None):
     """
     Show small result item with error icon and a message.
     """
-    return ExtensionSmallResultItem(
-        icon="images/error.svg", name=message, on_action=DoNothingAction()
+    if not details:
+        return ExtensionSmallResultItem(
+            icon="images/error.svg", name=message, on_enter=DoNothingAction()
+        )
+
+    return ExtensionResultItem(
+        icon="images/error.svg",
+        name=message,
+        description=details,
+        on_enter=DoNothingAction(),
     )
 
 
@@ -99,9 +107,12 @@ class NotesNvExtension(Extension):
         """
         Show results that match user's query.
         """
-        matches = search_notes(
-            self.get_notes_path(), self.get_note_file_extensions(), arg
-        )
+        try:
+            matches = search_notes(
+                self.get_notes_path(), self.get_note_file_extensions(), arg
+            )
+        except SearchError as exc:
+            return RenderResultListAction([error_item(exc.message, exc.details)])
 
         items = []
         for match in matches[:MAX_RESULTS_VISIBLE]:

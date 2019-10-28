@@ -25,13 +25,17 @@ class SearchResultItem(NamedTuple):  # pylint: disable=too-few-public-methods
     match_summary: str
 
 
-class SubprocessError(Exception):
+class SearchError(Exception):
     """
-    Subprocess run didn't return expected exit code
+    Search failure, message intended for the user.
     """
+    def __init__(self, message, details=None):
+        super(SearchError, self).__init__(message, details)
+        self.message = message
+        self.details = details
 
 
-def grep_dir(path, file_exts, pattern):
+def grep_dir(path, file_exts, pattern, grep_cmd="grep"):
     """
     Call `grep` recursively on a directory and return matching filenames and
     first matching line of each file
@@ -39,25 +43,30 @@ def grep_dir(path, file_exts, pattern):
     Only include files with certain extensions.
     """
     include_globs = ["--include=*.{}".format(e) for e in file_exts]
-    ret = subprocess.run(
-        [
-            "grep",
-            "--with-filename",
-            "--ignore-case",
-            "--recursive",
-            "--extended-regexp",
-            "--null",
-            "--max-count=1",
-        ]
-        + include_globs
-        + ["-e", pattern, path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
+    try:
+        ret = subprocess.run(
+            [
+                grep_cmd,
+                "--with-filename",
+                "--ignore-case",
+                "--recursive",
+                "--extended-regexp",
+                "--null",
+                "--max-count=1",
+            ]
+            + include_globs
+            + ["-e", pattern, path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise SearchError("Could not execute `grep` system command", exc.strerror)
 
     if ret.returncode == 2:
-        raise SubprocessError(ret.stderr.decode("utf-8"))
+        raise SearchError(
+            "Could not search through note contents", ret.stderr.decode("utf-8")
+        )
 
     out = ret.stdout.decode("utf-8")
     # Can't use .splitlines below because
@@ -96,31 +105,36 @@ def name_chunks_to_find_args(chunks):
     return args
 
 
-def find_dir(path, file_exts, name_chunks):
+def find_dir(path, file_exts, name_chunks, find_cmd="find"):
     """
     Execute `find` on a directory and find all files that:
     - have one of the extensions in `file_exts`
     - have names that contain all `name_chunks` in any order
     """
-    ret = subprocess.run(
-        [
-            "find",
-            path,
-            "-type",
-            "f",
-            "-regextype",
-            "egrep",
-            "-iregex",
-            file_exts_to_regex(file_exts),
-        ]
-        + name_chunks_to_find_args(name_chunks),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
+    try:
+        ret = subprocess.run(
+            [
+                find_cmd,
+                path,
+                "-type",
+                "f",
+                "-regextype",
+                "egrep",
+                "-iregex",
+                file_exts_to_regex(file_exts),
+            ]
+            + name_chunks_to_find_args(name_chunks),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise SearchError("Could not execute `find` system command", exc.strerror)
 
     if ret.returncode != 0:
-        raise SubprocessError(ret.stderr.decode("utf-8"))
+        raise SearchError(
+            "Could not search for note files", ret.stderr.decode("utf-8")
+        )
 
     return [
         os.path.relpath(fpath, path)

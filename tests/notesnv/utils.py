@@ -9,7 +9,7 @@ def create_text_file(path, filename, text):
     return full_path
 
 
-def with_temp_dir(items):
+def with_temp_dir(items=[]):
     def decorator(func):
         def wrapper():
             with TemporaryDirectory() as path:

@@ -1,3 +1,5 @@
+import os
+import pytest
 from utils import with_temp_dir
 from notesnv import search
 
@@ -47,3 +49,35 @@ def test_grep_one_file(path):
     matches = search.grep_dir(path, ["txt"], "snake")
     assert len(matches) == 1
     assert matches[0][0] == "file2.txt"
+
+
+@with_temp_dir()
+def test_grep_wrong_command(path):
+    with pytest.raises(search.SearchError):
+        search.grep_dir(path, ["txt"], "snake", grep_cmd="no_such_grep_command_ever")
+
+
+@with_temp_dir()
+def test_grep_wrong_path(path):
+    with pytest.raises(search.SearchError):
+        search.grep_dir(os.path.join(path, "nosuchdir"), ["txt"], "snake")
+
+
+@with_temp_dir()
+def test_find_wrong_command(path):
+    with pytest.raises(search.SearchError):
+        search.grep_dir(
+            search.find_dir(path, ["txt"], ["python"], find_cmd="no_such_find_cmdn")
+        )
+
+
+@with_temp_dir()
+def test_find_wrong_path(path):
+    with pytest.raises(search.SearchError):
+        search.grep_dir(
+            search.find_dir(
+                os.path.join(path, "nosuchdir"),
+                ["txt"],
+                ["python"]
+            )
+        )
