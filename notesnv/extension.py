@@ -76,6 +76,9 @@ class NotesNvExtension(Extension):
         """
         # Split this up into "is_new_note_filename" and "create_note_action_item"
         new_note_title = note_filename_from_query(query_arg)
+        if not new_note_title:
+            return None
+
         exts = self.get_note_file_extensions()
         if contains_filename_match(query_matches, new_note_title, exts):
             return None
