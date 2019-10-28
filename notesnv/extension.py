@@ -17,7 +17,7 @@ from .extension_method_caller import (
     call_extension_method,
     CallExtensionMethodEventListener,
 )
-from .search import search_notes
+from .search import search_notes, contains_filename_match
 from .cmd_arg_utils import argbuild
 
 
@@ -33,22 +33,15 @@ def error_item(message):
     )
 
 
-def safe_filename(fn):
+def note_filename_from_query(fn):
     """
-    Remove characters from string that could cause problems if used in a filename
+    Remove characters from note title that could cause filename problems
     """
-    return re.sub(r"[^a-zA-Z0-9 _\-]", "", fn)
-
-
-def contains_filename_match(matches, filename, extensions):
-    """
-    Whether search results contain given filename with one of possible extensions.
-    """
-    possible_fns = set(f"{filename.lower()}.{ext.lower()}" for ext in extensions)
-    for match in matches:
-        if match.filename_lower in possible_fns:
-            return True
-    return False
+    fn = re.sub(r"[^a-zA-Z0-9 _\-]", "", fn)
+    fn = re.sub(r"\s+", " ", fn)
+    fn = re.sub(r"^\s+", "", fn)
+    fn = re.sub(r"\s+$", "", fn)
+    return fn
 
 
 class NotesNvExtension(Extension):
@@ -82,7 +75,7 @@ class NotesNvExtension(Extension):
         Check list of matches to make sure the new filename doesnt exist already
         """
         # Split this up into "is_new_note_filename" and "create_note_action_item"
-        new_note_title = safe_filename(query_arg)
+        new_note_title = note_filename_from_query(query_arg)
         exts = self.get_note_file_extensions()
         if contains_filename_match(query_matches, new_note_title, exts):
             return None

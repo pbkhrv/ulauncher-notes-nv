@@ -212,3 +212,14 @@ def search_notes(path, file_exts, query):
     args = query.split(" ")
     word_boundary_regex = re.compile("\\b{}".format(re.escape(args[0])))
     return list(sorted(matches, key=partial(match_sort_key, word_boundary_regex)))
+
+
+def contains_filename_match(matches, filename, extensions):
+    """
+    Whether search results contain given filename with one of possible extensions.
+    """
+    possible_fns = set(f"{filename.lower()}.{ext.lower()}" for ext in extensions)
+    for match in matches:
+        if match.filename_lower in possible_fns:
+            return True
+    return False
