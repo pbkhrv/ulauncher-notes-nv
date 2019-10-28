@@ -13,10 +13,7 @@ from ulauncher.api.shared.action.RenderResultListAction import RenderResultListA
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
 
-from .extension_method_caller import (
-    call_extension_method,
-    CallExtensionMethodEventListener,
-)
+from .extension_method_caller import call_method_action, CallObjectMethodEventListener
 from .search import search_notes, contains_filename_match, SearchError
 from .cmd_arg_utils import argbuild
 
@@ -52,13 +49,17 @@ def note_filename_from_query(fn):
     return fn
 
 
-class NotesNvExtension(Extension):
-    """ Extension class, coordinates everything """
+class NotesNv:
+    """
+    Main logic of the extension. Responsible for the following:
+    - handling of user queries
+    - searching of notes
+    - creation of notes
+    - error reporting
+    """
 
-    def __init__(self):
-        super(NotesNvExtension, self).__init__()
-        self.subscribe(KeywordQueryEvent, KeywordQueryEventListener())
-        self.subscribe(ItemEnterEvent, CallExtensionMethodEventListener())
+    def __init__(self, preferences):
+        self.preferences = preferences
 
     def get_notes_path(self):
         """
@@ -97,7 +98,7 @@ class NotesNvExtension(Extension):
             icon="images/create-note.svg",
             name="Create note",
             description=new_note_filename,
-            on_enter=call_extension_method(
+            on_enter=call_method_action(
                 self.do_create_note,
                 os.path.join(self.get_notes_path(), new_note_filename),
             ),
@@ -120,7 +121,7 @@ class NotesNvExtension(Extension):
                 icon="images/note.svg",
                 name=match.filename,
                 description=match.match_summary,
-                on_enter=call_extension_method(
+                on_enter=call_method_action(
                     self.do_open_note,
                     os.path.join(self.get_notes_path(), match.filename),
                 ),
@@ -164,13 +165,35 @@ class NotesNvExtension(Extension):
         if not cmd:
             return OpenAction(path)
         args = argbuild(cmd, {"fn": path}, append_missing_field="fn")
-        subprocess.Popen(args)
+        try:
+            subprocess.Popen(args)
+        except FileNotFoundError as exc:
+            return RenderResultListAction(
+                [error_item("Could not execute note open command", exc.strerror)]
+            )
+
         return DoNothingAction()
+
+
+class NotesNvExtension(Extension):
+    """
+    Extension class, only exists to coordinate others
+    """
+
+    def __init__(self):
+        super(NotesNvExtension, self).__init__()
+        self.notesnv = NotesNv(self.preferences)
+        self.subscribe(KeywordQueryEvent, KeywordQueryEventListener(self.notesnv))
+        self.subscribe(ItemEnterEvent, CallObjectMethodEventListener(self.notesnv))
 
 
 # pylint: disable=too-few-public-methods
 class KeywordQueryEventListener(EventListener):
     """ KeywordQueryEventListener class manages user input """
+
+    def __init__(self, notesnv):
+        super(KeywordQueryEventListener, self).__init__()
+        self.notesnv = notesnv
 
     def on_event(self, event, extension):
         """
@@ -179,5 +202,5 @@ class KeywordQueryEventListener(EventListener):
         # assuming only one ulauncher keyword
         arg = event.get_argument()
         if not arg:
-            return extension.process_empty_query()
-        return extension.process_search_query(arg)
+            return self.notesnv.process_empty_query()
+        return self.notesnv.process_search_query(arg)
