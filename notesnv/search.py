@@ -29,6 +29,7 @@ class SearchError(Exception):
     """
     Search failure, message intended for the user.
     """
+
     def __init__(self, message, details=None):
         super(SearchError, self).__init__(message, details)
         self.message = message
@@ -80,12 +81,13 @@ def grep_dir(path, file_exts, pattern, grep_cmd="grep"):
     return matches
 
 
-def file_exts_to_regex(exts):
+def file_exts_to_regex(exts, quoted=False):
     """
-    Turn list of file extensions into one regex to be used with `find`
+    Turn list of file extensions into one regex
     """
-    globs = ["\\.{}".format(re.escape(e)) for e in exts]
-    return ".+({})$".format("|".join(globs))
+    quote = '"' if quoted else ""
+    globs = "|".join("\\.{}".format(re.escape(e)) for e in exts)
+    return f"^{quote}.+({globs}){quote}$"
 
 
 def name_chunks_to_find_args(chunks):
@@ -132,13 +134,41 @@ def find_dir(path, file_exts, name_chunks, find_cmd="find"):
         raise SearchError("Could not execute `find` system command", exc.strerror)
 
     if ret.returncode != 0:
-        raise SearchError(
-            "Could not search for note files", ret.stderr.decode("utf-8")
-        )
+        raise SearchError("Could not search for note files", ret.stderr.decode("utf-8"))
 
     return [
         os.path.relpath(fpath, path)
         for fpath in ret.stdout.decode("utf-8").splitlines()
+    ]
+
+
+# pylint: disable=unused-argument
+def ls_dir(path, file_exts, ls_cmd="/bin/ls"):
+    """
+    Execute `ls` on a directory and return all files...
+    - that have one of the extensions in `file_exts`
+    - sorted by modified time, most recent first
+    """
+    try:
+        ret = subprocess.run(
+            [ls_cmd, "--quote-name", "-t", "-1", "--escape", "--quote-name", path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except OSError as exc:
+        raise SearchError("Could not execute `ls` system command", exc.strerror)
+
+    if ret.returncode != 0:
+        raise SearchError(
+            "Could not get a directory listing", ret.stderr.decode("utf-8")
+        )
+
+    extensions_regex = file_exts_to_regex(file_exts, quoted=True)
+    return [
+        fn.strip('"')
+        for fn in ret.stdout.decode("utf-8").splitlines()
+        if re.fullmatch(extensions_regex, fn, re.IGNORECASE)
     ]
 
 

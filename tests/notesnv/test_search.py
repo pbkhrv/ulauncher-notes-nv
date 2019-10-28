@@ -81,3 +81,11 @@ def test_find_wrong_path(path):
                 ["python"]
             )
         )
+
+
+@with_temp_dir(["python cheatsheet.txt", "java cheatsheet.TXT", "nothing.nothing"])
+def test_ls_txt_files(path):
+    fns = search.ls_dir(path, ["txt"])
+    assert len(fns) == 2
+    assert "python cheatsheet.txt" in fns
+    assert "java cheatsheet.TXT" in fns
