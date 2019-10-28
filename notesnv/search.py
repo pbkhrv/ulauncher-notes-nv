@@ -60,7 +60,7 @@ def grep_dir(path, file_exts, pattern, grep_cmd="grep"):
             stderr=subprocess.PIPE,
             check=False,
         )
-    except FileNotFoundError as exc:
+    except OSError as exc:
         raise SearchError("Could not execute `grep` system command", exc.strerror)
 
     if ret.returncode == 2:
@@ -128,7 +128,7 @@ def find_dir(path, file_exts, name_chunks, find_cmd="find"):
             stderr=subprocess.PIPE,
             check=False,
         )
-    except FileNotFoundError as exc:
+    except OSError as exc:
         raise SearchError("Could not execute `find` system command", exc.strerror)
 
     if ret.returncode != 0:
