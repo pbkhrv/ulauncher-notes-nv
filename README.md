@@ -8,7 +8,7 @@ A [NotationalVelocity](http://notational.net/)-inspired [Ulauncher](https://ulau
 - Keyboard-centric search-first user experience: every action, including new note creation, begins with a search
 - Intuitive fuzzy search of note titles and contents in Ulauncher
 - Notes are stored as individual text/markdown/whatever files in a directory - use your favorite tools to keep notes synchronized across devices
-- Use your favorite editor you like to view and edit notes
+- Use your favorite editor to view and edit notes
 
 
 ## Why?
