@@ -14,7 +14,7 @@ from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
 
 from .extension_method_caller import call_method_action, CallObjectMethodEventListener
-from .search import search_notes, contains_filename_match, SearchError
+from .search import search_notes, contains_filename_match, SearchError, ls_dir
 from .cmd_arg_utils import argbuild
 
 
@@ -99,8 +99,7 @@ class NotesNv:
             name="Create note",
             description=new_note_filename,
             on_enter=call_method_action(
-                self.do_create_note,
-                os.path.join(self.get_notes_path(), new_note_filename),
+                self.create_note, os.path.join(self.get_notes_path(), new_note_filename)
             ),
         )
 
@@ -122,8 +121,7 @@ class NotesNv:
                 name=match.filename,
                 description=match.match_summary,
                 on_enter=call_method_action(
-                    self.do_open_note,
-                    os.path.join(self.get_notes_path(), match.filename),
+                    self.open_note, os.path.join(self.get_notes_path(), match.filename)
                 ),
             )
             items.append(item)
@@ -134,21 +132,38 @@ class NotesNv:
 
         return RenderResultListAction(items)
 
-    def process_empty_query(self):  # pylint: disable=no-self-use
+    def process_empty_query(self):
         """
         Show something if query is empty
         """
-        return RenderResultListAction(
-            [
-                ExtensionResultItem(
-                    icon="images/notes-nv.svg",
-                    name="Please enter search query...",
-                    on_enter=DoNothingAction(),
-                )
-            ]
-        )
+        try:
+            recently_modified = ls_dir(
+                self.get_notes_path(), self.get_note_file_extensions()
+            )
+        except SearchError as exc:
+            return RenderResultListAction([error_item(exc.message, exc.details)])
 
-    def do_create_note(self, path):  # pylint: disable=no-self-use
+        items = [
+            ExtensionResultItem(
+                icon="images/notes-nv.svg",
+                name="Please enter search query...",
+                on_enter=DoNothingAction(),
+            )
+        ]
+
+        for fn in recently_modified[:MAX_RESULTS_VISIBLE]:
+            items.append(
+                ExtensionResultItem(
+                    icon="images/note.svg",
+                    name=fn,
+                    on_enter=call_method_action(
+                        self.open_note, os.path.join(self.get_notes_path(), fn)
+                    ),
+                )
+            )
+        return RenderResultListAction(items)
+
+    def create_note(self, path):  # pylint: disable=no-self-use
         """
         Create empty note file with given path and open it
         """
@@ -159,9 +174,9 @@ class NotesNv:
             return RenderResultListAction(
                 [error_item("Could not create note file", exc.strerror)]
             )
-        return self.do_open_note(path)
+        return self.open_note(path)
 
-    def do_open_note(self, path):
+    def open_note(self, path):
         """
         Open note file using command specified in preferences
         or OpenAction() if no command specified

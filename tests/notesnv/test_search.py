@@ -75,11 +75,7 @@ def test_find_wrong_command(path):
 def test_find_wrong_path(path):
     with pytest.raises(search.SearchError):
         search.grep_dir(
-            search.find_dir(
-                os.path.join(path, "nosuchdir"),
-                ["txt"],
-                ["python"]
-            )
+            search.find_dir(os.path.join(path, "nosuchdir"), ["txt"], ["python"])
         )
 
 
@@ -89,3 +85,15 @@ def test_ls_txt_files(path):
     assert len(fns) == 2
     assert "python cheatsheet.txt" in fns
     assert "java cheatsheet.TXT" in fns
+
+
+@with_temp_dir()
+def test_ls_wrong_command(path):
+    with pytest.raises(search.SearchError):
+        search.ls_dir(path, ["txt"], ls_cmd="/nowhat/who")
+
+
+@with_temp_dir()
+def test_ls_wrong_path(path):
+    with pytest.raises(search.SearchError):
+        search.ls_dir(os.path.join(path, "nosuchdir"), ["txt"], ls_cmd="/nowhat/who")
