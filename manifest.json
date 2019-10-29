@@ -1,7 +1,7 @@
 {
   "required_api_version": "^2.0.0",
   "name": "Notes NV",
-  "description": "NotationalVelocity-inspired notes taking",
+  "description": "Search, store and retrieve notes. Inspired by NotationalVelocity.",
   "developer_name": "Peter Bakhirev",
   "icon": "images/notes-nv.svg",
   "options": {
@@ -18,7 +18,7 @@
       "id": "notes-directory-path",
       "type": "input",
       "name": "Path to directory with notes",
-      "description": "Each note is stored in a separate text file",
+      "description": "Each note is stored in a separate text file.",
       "default_value": "~/notes/"
     },
     {
@@ -32,7 +32,7 @@
       "id": "open-note-command",
       "type": "input",
       "name": "Command to open a note file",
-      "description": "If empty, use default app via xdg-open. Use {fn} as placeholder for the full path to the note file (if not used, path will be passed as the last arg).",
+      "description": "If empty, will use default app via xdg-open. Use {fn} as placeholder for the full path to the note file (if not specified, path will be passed as the last arg).",
       "default_value": "gedit {fn}"
     }
   ]
