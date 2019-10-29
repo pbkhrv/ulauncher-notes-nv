@@ -12,10 +12,12 @@ from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallRes
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
+from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAction
 
 from .extension_method_caller import call_method_action, CallObjectMethodEventListener
 from .search import search_notes, contains_filename_match, SearchError, ls_dir
 from .cmd_arg_utils import argbuild
+from . import query_command
 
 
 MAX_RESULTS_VISIBLE = 10
@@ -103,17 +105,10 @@ class NotesNv:
             ),
         )
 
-    def process_search_query(self, arg):
+    def items_open_note_command(self, matches, query):
         """
-        Show results that match user's query.
+        Search result items for the "open note" command
         """
-        try:
-            matches = search_notes(
-                self.get_notes_path(), self.get_note_file_extensions(), arg
-            )
-        except SearchError as exc:
-            return RenderResultListAction([error_item(exc.message, exc.details)])
-
         items = []
         for match in matches[:MAX_RESULTS_VISIBLE]:
             item = ExtensionResultItem(
@@ -126,9 +121,48 @@ class NotesNv:
             )
             items.append(item)
 
-        create_note_item = self.create_note_action_item(arg, matches)
+        create_note_item = self.create_note_action_item(query, matches)
         if create_note_item:
             items.append(create_note_item)
+
+        return items
+
+    def items_copy_note_command(self, matches):
+        """
+        Search result items for the "copy to clipboard" command
+        """
+        items = []
+        for match in matches[:MAX_RESULTS_VISIBLE]:
+            item = ExtensionResultItem(
+                icon="images/copy-note.svg",
+                name=f"Copy: {match.filename}",
+                description=match.match_summary,
+                on_enter=call_method_action(
+                    self.copy_note, os.path.join(self.get_notes_path(), match.filename)
+                ),
+            )
+            items.append(item)
+        return items
+
+    def process_search_query(self, arg):
+        """
+        Show results that match user's query.
+        """
+        qcmd = query_command.parse(arg)
+
+        try:
+            matches = search_notes(
+                self.get_notes_path(),
+                self.get_note_file_extensions(),
+                qcmd.search_query,
+            )
+        except SearchError as exc:
+            return RenderResultListAction([error_item(exc.message, exc.details)])
+
+        if qcmd.cmd == "cp":
+            items = self.items_copy_note_command(matches)
+        else:
+            items = self.items_open_note_command(matches, qcmd.search_query)
 
         return RenderResultListAction(items)
 
@@ -163,7 +197,7 @@ class NotesNv:
             )
         return RenderResultListAction(items)
 
-    def create_note(self, path):  # pylint: disable=no-self-use
+    def create_note(self, path):
         """
         Create empty note file with given path and open it
         """
@@ -191,8 +225,15 @@ class NotesNv:
             return RenderResultListAction(
                 [error_item("Could not execute note open command", exc.strerror)]
             )
-
         return DoNothingAction()
+
+    def copy_note(self, path):  # pylint: disable=no-self-use
+        """
+        Copy the contents of note file into the clipboard
+        """
+        with open(path, "rt") as f:  # pylint: disable=invalid-name
+            text = os.linesep.join(f.readlines())
+        return CopyToClipboardAction(text)
 
 
 class NotesNvExtension(Extension):

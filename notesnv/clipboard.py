@@ -22,10 +22,7 @@ class GtkClipboard:
 
         :returns: contents of the clipboard
         """
-        Gdk.threads_enter()
-        text = self.clipboard.wait_for_text()
-        Gdk.threads_leave()
-        return text
+        return self.clipboard.wait_for_text()
 
     def set_text(self, text):
         """
@@ -33,6 +30,5 @@ class GtkClipboard:
 
         :param text: text to be copied into the clipboard
         """
-        Gdk.threads_enter()
         self.clipboard.set_text(text, -1)
-        Gdk.threads_leave()
+        self.clipboard.store()
