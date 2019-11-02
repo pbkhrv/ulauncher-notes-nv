@@ -18,6 +18,7 @@ from .extension_method_caller import call_method_action, CallObjectMethodEventLi
 from .search import search_notes, contains_filename_match, SearchError, ls_dir
 from .cmd_arg_utils import argbuild
 from . import query_command
+from .clipboard import GtkClipboard
 
 
 MAX_RESULTS_VISIBLE = 10
@@ -62,6 +63,7 @@ class NotesNv:
 
     def __init__(self, preferences):
         self.preferences = preferences
+        self.clipboard = GtkClipboard()
 
     def get_notes_path(self):
         """
@@ -79,29 +81,50 @@ class NotesNv:
             exts = "txt,md"
         return exts.replace(" ", "").split(",")
 
-    def create_note_action_item(self, query_arg, query_matches):
+    def can_be_new_note_title(self, query_arg, query_matches):
         """
-        Construct "Create note" result item if new filename.
-
-        Check list of matches to make sure the new filename doesnt exist already
+        Whether the search query can be turned into a new unique note title
         """
-        # Split this up into "is_new_note_filename" and "create_note_action_item"
         new_note_title = note_filename_from_query(query_arg)
         if not new_note_title:
-            return None
+            return False
 
         exts = self.get_note_file_extensions()
-        if contains_filename_match(query_matches, new_note_title, exts):
-            return None
+        return not contains_filename_match(query_matches, new_note_title, exts)
 
-        ext = exts[0]
-        new_note_filename = f"{new_note_title}.{ext}"
+    def new_note_filename(self, query_arg):
+        """
+        Construct a new note filename based on the search query
+        """
+        new_note_title = note_filename_from_query(query_arg)
+        ext = self.get_note_file_extensions()[0]
+        return f"{new_note_title}.{ext}"
+
+    def item_create_empty_note(self, new_note_filename):
+        """
+        Construct "Create empty note" result item
+        """
         return ExtensionResultItem(
             icon="images/create-note.svg",
-            name="Create note",
+            name="Create empty note",
             description=new_note_filename,
             on_enter=call_method_action(
-                self.create_note, os.path.join(self.get_notes_path(), new_note_filename)
+                self.create_empty_note,
+                os.path.join(self.get_notes_path(), new_note_filename),
+            ),
+        )
+
+    def item_create_note_from_clipboard(self, new_note_filename):
+        """
+        Construct "Create note from clipboard" result item
+        """
+        return ExtensionResultItem(
+            icon="images/create-note.svg",
+            name="Create note from clipboard",
+            description=new_note_filename,
+            on_enter=call_method_action(
+                self.create_note_from_clipboard,
+                os.path.join(self.get_notes_path(), new_note_filename),
             ),
         )
 
@@ -121,9 +144,12 @@ class NotesNv:
             )
             items.append(item)
 
-        create_note_item = self.create_note_action_item(query, matches)
-        if create_note_item:
-            items.append(create_note_item)
+        # If the search query looks like a new unique note title,
+        # offer to create the note
+        if self.can_be_new_note_title(query, matches):
+            fn = self.new_note_filename(query)
+            items.append(self.item_create_empty_note(fn))
+            items.append(self.item_create_note_from_clipboard(fn))
 
         return items
 
@@ -197,13 +223,28 @@ class NotesNv:
             )
         return RenderResultListAction(items)
 
-    def create_note(self, path):
+    def create_empty_note(self, path):
         """
-        Create empty note file with given path and open it
+        Create empty note file at the given path and open it
         """
         try:
             with open(path, "x"):
                 pass
+        except OSError as exc:
+            return RenderResultListAction(
+                [error_item("Could not create note file", exc.strerror)]
+            )
+        return self.open_note(path)
+
+    def create_note_from_clipboard(self, path):
+        """
+        Create a note file with the contents of the clipboard
+        at the given path and open it
+        """
+        try:
+            with open(path, "x") as f:
+                text = self.clipboard.get_text()
+                print(text, file=f)
         except OSError as exc:
             return RenderResultListAction(
                 [error_item("Could not create note file", exc.strerror)]
@@ -231,7 +272,7 @@ class NotesNv:
         """
         Copy the contents of note file into the clipboard
         """
-        with open(path, "rt") as f:  # pylint: disable=invalid-name
+        with open(path, "rt") as f:
             text = os.linesep.join(f.readlines())
         return CopyToClipboardAction(text)
 

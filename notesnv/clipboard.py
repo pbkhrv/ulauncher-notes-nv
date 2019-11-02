@@ -32,3 +32,9 @@ class GtkClipboard:
         """
         self.clipboard.set_text(text, -1)
         self.clipboard.store()
+
+    def is_text_available(self):
+        """
+        Whether there is anything in the clipboard that can be returned as text
+        """
+        return self.clipboard.wait_is_text_available()
