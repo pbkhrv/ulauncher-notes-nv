@@ -112,6 +112,7 @@ class NotesNv:
                 self.create_empty_note,
                 os.path.join(self.get_notes_path(), new_note_filename),
             ),
+            highlightable=False,
         )
 
     def item_create_note_from_clipboard(self, new_note_filename):
@@ -126,6 +127,7 @@ class NotesNv:
                 self.create_note_from_clipboard,
                 os.path.join(self.get_notes_path(), new_note_filename),
             ),
+            highlightable=False,
         )
 
     def items_open_note_command(self, matches, query):
@@ -141,6 +143,7 @@ class NotesNv:
                 on_enter=call_method_action(
                     self.open_note, os.path.join(self.get_notes_path(), match.filename)
                 ),
+                on_alt_enter=call_method_action(self.list_commands, match.filename),
             )
             items.append(item)
 
@@ -275,6 +278,24 @@ class NotesNv:
         with open(path, "rt") as f:
             text = os.linesep.join(f.readlines())
         return CopyToClipboardAction(text)
+
+    def list_commands(self, filename):
+        """
+        Show list of commands that can be run on the given note file
+        """
+        items = []
+        items.append(
+            ExtensionResultItem(
+                icon="images/copy-note.svg",
+                name="Copy note contents to clipboard",
+                description=filename,
+                on_enter=call_method_action(
+                    self.copy_note, os.path.join(self.get_notes_path(), filename)
+                ),
+                highlightable=False,
+            )
+        )
+        return RenderResultListAction(items)
 
 
 class NotesNvExtension(Extension):
