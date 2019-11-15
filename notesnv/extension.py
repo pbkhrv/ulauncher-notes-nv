@@ -14,7 +14,7 @@ from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
 from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAction
 
-from .extension_method_caller import call_method_action, CallObjectMethodEventListener
+from .callable_action import callable_action, CallableEventListener
 from .search import search_notes, contains_filename_match, SearchError, ls_dir
 from .cmd_arg_utils import argbuild
 from . import query_command
@@ -108,7 +108,7 @@ class NotesNv:
             icon="images/create-note.svg",
             name="Create empty note",
             description=new_note_filename,
-            on_enter=call_method_action(
+            on_enter=callable_action(
                 self.create_empty_note,
                 os.path.join(self.get_notes_path(), new_note_filename),
             ),
@@ -123,7 +123,7 @@ class NotesNv:
             icon="images/create-note.svg",
             name="Create note from clipboard",
             description=new_note_filename,
-            on_enter=call_method_action(
+            on_enter=callable_action(
                 self.create_note_from_clipboard,
                 os.path.join(self.get_notes_path(), new_note_filename),
             ),
@@ -140,10 +140,10 @@ class NotesNv:
                 icon="images/note.svg",
                 name=match.filename,
                 description=match.match_summary,
-                on_enter=call_method_action(
+                on_enter=callable_action(
                     self.open_note, os.path.join(self.get_notes_path(), match.filename)
                 ),
-                on_alt_enter=call_method_action(self.list_commands, match.filename),
+                on_alt_enter=callable_action(self.list_commands, match.filename),
             )
             items.append(item)
 
@@ -166,7 +166,7 @@ class NotesNv:
                 icon="images/copy-note.svg",
                 name=f"Copy: {match.filename}",
                 description=match.match_summary,
-                on_enter=call_method_action(
+                on_enter=callable_action(
                     self.copy_note, os.path.join(self.get_notes_path(), match.filename)
                 ),
             )
@@ -219,7 +219,7 @@ class NotesNv:
                 ExtensionResultItem(
                     icon="images/note.svg",
                     name=fn,
-                    on_enter=call_method_action(
+                    on_enter=callable_action(
                         self.open_note, os.path.join(self.get_notes_path(), fn)
                     ),
                 )
@@ -289,7 +289,7 @@ class NotesNv:
                 icon="images/copy-note.svg",
                 name="Copy note contents to clipboard",
                 description=filename,
-                on_enter=call_method_action(
+                on_enter=callable_action(
                     self.copy_note, os.path.join(self.get_notes_path(), filename)
                 ),
                 highlightable=False,
@@ -307,7 +307,7 @@ class NotesNvExtension(Extension):
         super(NotesNvExtension, self).__init__()
         self.notesnv = NotesNv(self.preferences)
         self.subscribe(KeywordQueryEvent, KeywordQueryEventListener(self.notesnv))
-        self.subscribe(ItemEnterEvent, CallObjectMethodEventListener(self.notesnv))
+        self.subscribe(ItemEnterEvent, CallableEventListener())
 
 
 # pylint: disable=too-few-public-methods
