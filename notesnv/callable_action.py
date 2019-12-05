@@ -2,6 +2,7 @@
 Execute a callable from ExtensionCustomAction event listener
 """
 from collections import OrderedDict
+from typing import Any, Hashable, Callable
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 
@@ -40,7 +41,7 @@ class Cache:
     def __init__(self):
         self.cache = LRU(maxsize=128)
 
-    def add(self, item):
+    def add(self, item: Any) -> Hashable:
         """
         Add item to the cache and return the key by which it can be retrieved later
         """
@@ -48,7 +49,7 @@ class Cache:
         self.cache[key] = item
         return key
 
-    def get(self, key):
+    def get(self, key: Hashable) -> Any:
         """
         Retrieve item given its key or return None if not found
         """
@@ -58,7 +59,7 @@ class Cache:
 _CALLABLE_CACHE = Cache()
 
 
-def callable_action(func, *args, **keywords):
+def callable_action(func: Callable, *args, **keywords) -> ExtensionCustomAction:
     """
     Call specified callable with specified arguments from a ItemEnterEvent listener
 

@@ -4,18 +4,27 @@ Notes search Ulauncher extension inspired by NotationalVelocity
 import os
 import re
 import subprocess
+from typing import Type, Optional, List
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
+from ulauncher.api.shared.item.ResultItem import ResultItem
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallResultItem
+from ulauncher.api.shared.action.BaseAction import BaseAction
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenAction import OpenAction
 from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAction
 
 from .callable_action import callable_action, CallableEventListener
-from .search import search_notes, contains_filename_match, SearchError, ls_dir
+from .search import (
+    search_notes,
+    contains_filename_match,
+    SearchError,
+    ls_dir,
+    SearchResultItem,
+)
 from .cmd_arg_utils import argbuild
 from . import query_command
 from .clipboard import GtkClipboard
@@ -24,7 +33,7 @@ from .clipboard import GtkClipboard
 MAX_RESULTS_VISIBLE = 10
 
 
-def error_item(message, details=None):
+def error_item(message: str, details: Optional[str] = None) -> Type[ResultItem]:
     """
     Show small result item with error icon and a message.
     """
@@ -41,7 +50,7 @@ def error_item(message, details=None):
     )
 
 
-def note_filename_from_query(fn):
+def note_filename_from_query(fn: str) -> str:
     """
     Remove characters from note title that could cause filename problems
     """
@@ -65,13 +74,13 @@ class NotesNv:
         self.preferences = preferences
         self.clipboard = GtkClipboard()
 
-    def get_notes_path(self):
+    def get_notes_path(self) -> str:
         """
         Notes directory path preference.
         """
         return os.path.expanduser(self.preferences["notes-directory-path"])
 
-    def get_note_file_extensions(self):
+    def get_note_file_extensions(self) -> List[str]:
         """
         Get list of notes file extensions from preferences.
         Stored as comma-separated list.
@@ -81,7 +90,9 @@ class NotesNv:
             exts = "txt,md"
         return exts.replace(" ", "").split(",")
 
-    def can_be_new_note_title(self, query_arg, query_matches):
+    def can_be_new_note_title(
+        self, query_arg: str, query_matches: List[SearchResultItem]
+    ) -> bool:
         """
         Whether the search query can be turned into a new unique note title
         """
@@ -92,7 +103,7 @@ class NotesNv:
         exts = self.get_note_file_extensions()
         return not contains_filename_match(query_matches, new_note_title, exts)
 
-    def new_note_filename(self, query_arg):
+    def new_note_filename(self, query_arg: str) -> str:
         """
         Construct a new note filename based on the search query
         """
@@ -100,7 +111,7 @@ class NotesNv:
         ext = self.get_note_file_extensions()[0]
         return f"{new_note_title}.{ext}"
 
-    def item_create_empty_note(self, new_note_filename):
+    def item_create_empty_note(self, new_note_filename: str) -> Type[ResultItem]:
         """
         Construct "Create empty note" result item
         """
@@ -115,7 +126,9 @@ class NotesNv:
             highlightable=False,
         )
 
-    def item_create_note_from_clipboard(self, new_note_filename):
+    def item_create_note_from_clipboard(
+        self, new_note_filename: str
+    ) -> Type[ResultItem]:
         """
         Construct "Create note from clipboard" result item
         """
@@ -130,7 +143,9 @@ class NotesNv:
             highlightable=False,
         )
 
-    def items_open_note_command(self, matches, query):
+    def items_open_note_command(
+        self, matches: List[SearchResultItem], query: str
+    ) -> List[ResultItem]:
         """
         Search result items for the "open note" command
         """
@@ -156,7 +171,9 @@ class NotesNv:
 
         return items
 
-    def items_copy_note_command(self, matches):
+    def items_copy_note_command(
+        self, matches: List[SearchResultItem]
+    ) -> List[ResultItem]:
         """
         Search result items for the "copy to clipboard" command
         """
@@ -173,7 +190,7 @@ class NotesNv:
             items.append(item)
         return items
 
-    def process_search_query(self, arg):
+    def process_search_query(self, arg: str) -> Type[BaseAction]:
         """
         Show results that match user's query.
         """
@@ -195,7 +212,7 @@ class NotesNv:
 
         return RenderResultListAction(items)
 
-    def process_empty_query(self):
+    def process_empty_query(self) -> Type[BaseAction]:
         """
         Show something if query is empty
         """
@@ -226,7 +243,7 @@ class NotesNv:
             )
         return RenderResultListAction(items)
 
-    def create_empty_note(self, path):
+    def create_empty_note(self, path: str) -> Type[BaseAction]:
         """
         Create empty note file at the given path and open it
         """
@@ -239,7 +256,7 @@ class NotesNv:
             )
         return self.open_note(path)
 
-    def create_note_from_clipboard(self, path):
+    def create_note_from_clipboard(self, path: str) -> Type[BaseAction]:
         """
         Create a note file with the contents of the clipboard
         at the given path and open it
@@ -254,7 +271,7 @@ class NotesNv:
             )
         return self.open_note(path)
 
-    def open_note(self, path):
+    def open_note(self, path: str) -> Type[BaseAction]:
         """
         Open note file using command specified in preferences
         or OpenAction() if no command specified
@@ -271,7 +288,7 @@ class NotesNv:
             )
         return DoNothingAction()
 
-    def copy_note(self, path):  # pylint: disable=no-self-use
+    def copy_note(self, path: str) -> Type[BaseAction]:  # pylint: disable=no-self-use
         """
         Copy the contents of note file into the clipboard
         """
@@ -279,7 +296,7 @@ class NotesNv:
             text = os.linesep.join(f.readlines())
         return CopyToClipboardAction(text)
 
-    def list_commands(self, filename):
+    def list_commands(self, filename: str) -> Type[BaseAction]:
         """
         Show list of commands that can be run on the given note file
         """
@@ -318,7 +335,7 @@ class KeywordQueryEventListener(EventListener):
         super(KeywordQueryEventListener, self).__init__()
         self.notesnv = notesnv
 
-    def on_event(self, event, extension):
+    def on_event(self, event, extension) -> Type[BaseAction]:
         """
         Handle keyword query event.
         """

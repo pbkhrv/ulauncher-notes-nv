@@ -2,13 +2,14 @@
 Utilities for working with command line strings and arguments
 """
 import re
+from typing import List, Dict, Optional
 
 
 DOUBLE_QUOTED_GROUPS = re.compile(r"(\".+?\")")
 DOUBLE_QUOTED_STRING = re.compile(r"^\".+\"?")
 
 
-def argsplit(cmd):
+def argsplit(cmd: str) -> List[str]:
     """
     Split a command line string on spaces into an argument list
     that can be passed to subprocess.run()
@@ -41,7 +42,9 @@ def argsplit(cmd):
     return args
 
 
-def argbuild(cmd, mapping, append_missing_field=None):
+def argbuild(
+    cmd: str, mapping: Dict[str, str], append_missing_field: Optional[str] = None
+) -> List[str]:
     """
     Turn a command template string into list of args
     suitable for subprocess.run() by replacing fields with values

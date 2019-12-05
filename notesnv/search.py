@@ -7,7 +7,7 @@ Note searching functionality
 import subprocess
 import re
 import os
-from typing import NamedTuple
+from typing import NamedTuple, List, Optional, Tuple, Pattern
 from functools import partial
 
 
@@ -30,13 +30,15 @@ class SearchError(Exception):
     Search failure, message intended for the user.
     """
 
-    def __init__(self, message, details=None):
+    def __init__(self, message: str, details: Optional[str] = None):
         super(SearchError, self).__init__(message, details)
         self.message = message
         self.details = details
 
 
-def grep_dir(path, file_exts, pattern, grep_cmd="grep"):
+def grep_dir(
+    path: str, file_exts: List[str], pattern: str, grep_cmd: str = "grep"
+) -> List[Tuple[str, str]]:
     """
     Call `grep` recursively on a directory and return matching filenames and
     first matching line of each file
@@ -81,7 +83,7 @@ def grep_dir(path, file_exts, pattern, grep_cmd="grep"):
     return matches
 
 
-def file_exts_to_regex(exts, quoted=False):
+def file_exts_to_regex(exts: List[str], quoted: bool = False) -> str:
     """
     Turn list of file extensions into one regex
     """
@@ -90,7 +92,7 @@ def file_exts_to_regex(exts, quoted=False):
     return f"^{quote}.+({globs}){quote}$"
 
 
-def name_chunks_to_find_args(chunks):
+def name_chunks_to_find_args(chunks: List[str]) -> List[str]:
     """
     Turn array of name chunks into a set of '-iname' args joined by '-a' predicate.
 
@@ -107,7 +109,9 @@ def name_chunks_to_find_args(chunks):
     return args
 
 
-def find_dir(path, file_exts, name_chunks, find_cmd="find"):
+def find_dir(
+    path: str, file_exts: List[str], name_chunks: List[str], find_cmd: str = "find"
+) -> List[str]:
     """
     Execute `find` on a directory and find all files that:
     - have one of the extensions in `file_exts`
@@ -143,7 +147,7 @@ def find_dir(path, file_exts, name_chunks, find_cmd="find"):
 
 
 # pylint: disable=unused-argument
-def ls_dir(path, file_exts, ls_cmd="/bin/ls"):
+def ls_dir(path: str, file_exts: List[str], ls_cmd: str = "/bin/ls") -> List[str]:
     """
     Execute `ls` on a directory and return all files...
     - that have one of the extensions in `file_exts`
@@ -172,7 +176,7 @@ def ls_dir(path, file_exts, ls_cmd="/bin/ls"):
     ]
 
 
-def summarized_content_match(text, ctx_word, ctx_len):
+def summarized_content_match(text: str, ctx_word: str, ctx_len: int) -> str:
     """
     Summarize a line of text by leaving ctx_len characters around the ctx_word
     and trimming the rest
@@ -188,7 +192,9 @@ def summarized_content_match(text, ctx_word, ctx_len):
     return ctx
 
 
-def search_note_file_contents(path, file_exts, query):
+def search_note_file_contents(
+    path: str, file_exts: List[str], query: str
+) -> List[SearchResultItem]:
     """
     Call `grep` and turn results into SearchResultItem's
     """
@@ -210,7 +216,9 @@ def search_note_file_contents(path, file_exts, query):
     return matches
 
 
-def search_note_file_titles(path, file_exts, query):
+def search_note_file_titles(
+    path: str, file_exts: List[str], query: str
+) -> List[SearchResultItem]:
     """
     Call `find` and turn results into SearchResultItem's
     """
@@ -223,7 +231,7 @@ def search_note_file_titles(path, file_exts, query):
     return matches
 
 
-def match_sort_key(word_boundary_regex, match):
+def match_sort_key(word_boundary_regex: Pattern, match: SearchResultItem) -> Tuple:
     """
     Generate a tuple that can be used as a sorting key.
 
@@ -244,7 +252,7 @@ def match_sort_key(word_boundary_regex, match):
     )
 
 
-def search_notes(path, file_exts, query):
+def search_notes(path: str, file_exts: List[str], query: str) -> List[SearchResultItem]:
     """
     Search note contents and titles, combine, dedup and sort results.
     """
@@ -258,7 +266,9 @@ def search_notes(path, file_exts, query):
     return list(sorted(matches, key=partial(match_sort_key, word_boundary_regex)))
 
 
-def contains_filename_match(matches, filename, extensions):
+def contains_filename_match(
+    matches: List[SearchResultItem], filename: str, extensions: List[str]
+) -> bool:
     """
     Whether search results contain given filename with one of possible extensions.
     """

@@ -25,7 +25,7 @@ class QueryCommand(NamedTuple):
         return f"{self.cmd}: {self.search_query}"
 
 
-def parse(query):
+def parse(query: str) -> QueryCommand:
     """
     Turn query string into an instance of QueryCommand
 
