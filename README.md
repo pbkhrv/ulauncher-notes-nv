@@ -93,6 +93,58 @@ The "nonconformist" part is the one where NV ditched the traditional file-orient
 Ulauncher happens to share the search-centric design goals. The only thing it doesn't provide is a text editor, and the hope is that using an external editor won't detract from the overall user experience too much.
 
 
+## Development
+
+I use the following tools while working on this extension:
+
+- [`Black`](https://github.com/psf/black) code formatter
+- `pytest`
+- `pylint` with the `flake8` plugin
+- `mypy` static type checker
+
+You can install them in one shot (except for `Black` - that's up to you) by running:
+
+```shell
+pip install -r scripts/requirements.txt
+```
+
+Check PEP8 compliance, perform static type analysis and run unit tests:
+
+```shell
+make test
+```
+
+Backup the "production" version of the extension and symlink the development version into Ulauncher's extension directory:
+
+```shell
+make symlink
+```
+
+Quit Ulauncher. Then run it in debug mode:
+
+```shell
+make run_ul
+```
+
+Run extension in the terminal, connect it to Ulauncher in debug mode:
+
+```shell
+make run
+```
+
+(if that doesn't work, check the connection string URL printed out by Ulauncher and modify the Makefile accordingly.)
+
+Unlink the development version of the extension from Ulauncher and replace it with whatever was there before:
+
+```shell
+make unlink
+```
+
+## Contributions
+
+Issues and pull requests are welcome!
+
+
 ## Inspiration and thanks
 
-I loved NotationalVelocity and its modern fork [NVAlt](https://brettterpstra.com/projects/nvalt/) on Mac OS, and I've been (largely unsuccessfully) searching for something as good on Linux for a while.
+I loved NotationalVelocity and its modern fork [NVAlt](https://brettterpstra.com/projects/nvalt/) on Mac OS, and I've been (largely unsuccessfully) searching for something as good on Linux for a while. This extension is clearly not "as good" but it's "good enough".
