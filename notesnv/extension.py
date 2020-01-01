@@ -4,7 +4,7 @@ Notes search Ulauncher extension inspired by NotationalVelocity
 import os
 import re
 import subprocess
-from typing import Type, Optional, List
+from typing import Optional, List
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
@@ -33,7 +33,7 @@ from .clipboard import GtkClipboard
 MAX_RESULTS_VISIBLE = 10
 
 
-def error_item(message: str, details: Optional[str] = None) -> Type[ResultItem]:
+def error_item(message: str, details: Optional[str] = None) -> ResultItem:
     """
     Show small result item with error icon and a message.
     """
@@ -111,7 +111,7 @@ class NotesNv:
         ext = self.get_note_file_extensions()[0]
         return f"{new_note_title}.{ext}"
 
-    def item_create_empty_note(self, new_note_filename: str) -> Type[ResultItem]:
+    def item_create_empty_note(self, new_note_filename: str) -> ResultItem:
         """
         Construct "Create empty note" result item
         """
@@ -126,9 +126,7 @@ class NotesNv:
             highlightable=False,
         )
 
-    def item_create_note_from_clipboard(
-        self, new_note_filename: str
-    ) -> Type[ResultItem]:
+    def item_create_note_from_clipboard(self, new_note_filename: str) -> ResultItem:
         """
         Construct "Create note from clipboard" result item
         """
@@ -190,7 +188,7 @@ class NotesNv:
             items.append(item)
         return items
 
-    def process_search_query(self, arg: str) -> Type[BaseAction]:
+    def process_search_query(self, arg: str) -> BaseAction:
         """
         Show results that match user's query.
         """
@@ -212,7 +210,7 @@ class NotesNv:
 
         return RenderResultListAction(items)
 
-    def process_empty_query(self) -> Type[BaseAction]:
+    def process_empty_query(self) -> BaseAction:
         """
         Show something if query is empty
         """
@@ -243,7 +241,7 @@ class NotesNv:
             )
         return RenderResultListAction(items)
 
-    def create_empty_note(self, path: str) -> Type[BaseAction]:
+    def create_empty_note(self, path: str) -> BaseAction:
         """
         Create empty note file at the given path and open it
         """
@@ -256,7 +254,7 @@ class NotesNv:
             )
         return self.open_note(path)
 
-    def create_note_from_clipboard(self, path: str) -> Type[BaseAction]:
+    def create_note_from_clipboard(self, path: str) -> BaseAction:
         """
         Create a note file with the contents of the clipboard
         at the given path and open it
@@ -271,7 +269,7 @@ class NotesNv:
             )
         return self.open_note(path)
 
-    def open_note(self, path: str) -> Type[BaseAction]:
+    def open_note(self, path: str) -> BaseAction:
         """
         Open note file using command specified in preferences
         or OpenAction() if no command specified
@@ -288,7 +286,7 @@ class NotesNv:
             )
         return DoNothingAction()
 
-    def copy_note(self, path: str) -> Type[BaseAction]:  # pylint: disable=no-self-use
+    def copy_note(self, path: str) -> BaseAction:  # pylint: disable=no-self-use
         """
         Copy the contents of note file into the clipboard
         """
@@ -296,7 +294,7 @@ class NotesNv:
             text = os.linesep.join(f.readlines())
         return CopyToClipboardAction(text)
 
-    def list_commands(self, filename: str) -> Type[BaseAction]:
+    def list_commands(self, filename: str) -> BaseAction:
         """
         Show list of commands that can be run on the given note file
         """
@@ -335,7 +333,7 @@ class KeywordQueryEventListener(EventListener):
         super(KeywordQueryEventListener, self).__init__()
         self.notesnv = notesnv
 
-    def on_event(self, event, extension) -> Type[BaseAction]:
+    def on_event(self, event, extension) -> BaseAction:
         """
         Handle keyword query event.
         """
