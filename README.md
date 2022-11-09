@@ -71,6 +71,12 @@ gedit --new-document {fn}
 gedit
 ```
 
+Open note in Obsidian:
+
+```
+xdg-open "obsidian://open?path={fn}"
+```
+
 (If you don't specify `{fn}`, the note file path will be automatically passed to the editor as the last argument.)
 
 
